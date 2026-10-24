@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Collage Dice</title>
+<title>Chance Collage</title>
 <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Special+Elite&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -94,7 +94,7 @@ summary{cursor:pointer}
 <body>
 <div class="scraps" id="scraps" aria-hidden="true"></div>
 <main>
-  <h1 id="title" aria-label="Collage dice">Collage dice</h1>
+  <h1 id="title" aria-label="Chance Collage">Chance Collage</h1>
   <p class="sub">Roll one die per category. Each number picks an item from that category’s list. Build your collage from whatever comes up.</p>
 
   <section class="sheet" aria-live="polite">
@@ -131,7 +131,8 @@ const DEFAULTS = [
   {name:"Shape", items:["Square","Circle","Triangle","Strip","Organic blob","Star"]},
   {name:"Subject", items:["Cat","Building","Hands","Plant","Machine","Eye"]}
 ];
-const KEY = "collage-dice-v1";
+const KEY = "chance-collage
+  -v1";
 let cats = JSON.parse(JSON.stringify(DEFAULTS));
 let last = null, history = [], busy = false;
 
@@ -230,7 +231,7 @@ $("savecopy").onclick = async () => {
     ["dice","lists","hist","result","nums","scraps"].forEach(id => { const el = clone.querySelector("#"+id); if (el) el.innerHTML = ""; });
     const dv = clone.querySelector("#dice"); if (dv) dv.className = "dice";
     clone.removeAttribute("data-theme");
-    const tt = clone.querySelector("#title"); if (tt) tt.textContent = "Collage dice";
+    const tt = clone.querySelector("#title"); if (tt) tt.textContent = "Chance Collage";
     clone.querySelectorAll("script").forEach(s => {
       const t = s.textContent, a = t.indexOf("const DEFAULTS = "), e = t.indexOf("const KEY");
       if (a > -1 && e > a) {
@@ -278,7 +279,7 @@ function buildScraps(){
 }
 function buildTitle(){
   const t=$("title"); t.textContent="";
-  [..."Collage dice"].forEach((ch,i)=>{
+  [..."Chance Collage"].forEach((ch,i)=>{
     if(ch===" "){ t.appendChild(document.createTextNode(" ")); return; }
     const s=document.createElement("span"); s.className="k"+(i%5); s.textContent=ch; s.setAttribute("aria-hidden","true");
     s.style.transform="rotate("+(((i*53)%11)-5)+"deg) translateY("+(((i*29)%7)-3)+"px)"; t.appendChild(s);
