@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" style="color-scheme: dark;"><head><!-- frame-runtime --><!-- /frame-runtime -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Collage Dice</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#cfe3d6; --grid:#b4cfbf; --ink:#1d2b24; --paper:#fbfaf6; --muted:#52665b;
+  --accent:#e4572e; --line:#1d2b24; --input:#ffffff;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16211b; --grid:#21302a; --ink:#e8efe9; --paper:#223029; --muted:#9db3a5;
+    --accent:#ff7a4d; --line:#e8efe9; --input:#1a2620;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16211b; --grid:#21302a; --ink:#e8efe9; --paper:#223029; --muted:#9db3a5;
+  --accent:#ff7a4d; --line:#e8efe9; --input:#1a2620;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{
+  margin:0; color:var(--ink); background-color:var(--bg);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px;
+  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  line-height:1.4;
+}
+main{max-width:880px;margin:0 auto;padding:28px 18px 60px}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:800;margin:0 0 4px;letter-spacing:-.02em}
+.sub{margin:0 0 24px;color:var(--muted);max-width:60ch}
+.sheet{
+  background:var(--paper); border:2px solid var(--line); padding:22px;
+  box-shadow:6px 6px 0 var(--line); transform:rotate(-.4deg);
+}
+.dice{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;margin-bottom:20px}
+.slot{border:2px solid var(--line);background:var(--input);padding:10px;text-align:center}
+.slot:nth-child(even){transform:rotate(.7deg)}
+.slot:nth-child(odd){transform:rotate(-.5deg)}
+.cat{font-size:.85rem;color:var(--muted);margin-bottom:6px;overflow-wrap:anywhere}
+.die{
+  width:54px;height:54px;margin:0 auto 8px;border:2px solid var(--line);border-radius:10px;
+  background:var(--paper);display:flex;align-items:center;justify-content:center;
+  font-size:1.9rem;font-weight:800;
+}
+.val{font-size:1.2rem;font-weight:600;overflow-wrap:anywhere;min-height:1.6em}
+.rolling .die{animation:shake .18s linear infinite}
+@keyframes shake{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg) translateY(-3px)}100%{transform:rotate(-8deg)}}
+@media (prefers-reduced-motion:reduce){.rolling .die{animation:none}}
+.result{font-size:clamp(1.5rem,5vw,2.3rem);font-weight:800;line-height:1.15;margin:4px 0 6px;overflow-wrap:anywhere}
+.nums{color:var(--muted);margin:0 0 18px}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+button{
+  font:inherit;font-weight:600;cursor:pointer;color:var(--ink);background:var(--paper);
+  border:2px solid var(--line);padding:10px 16px;border-radius:0;
+}
+button.go{background:var(--accent);color:#fff;font-size:1.25rem;padding:14px 28px;box-shadow:4px 4px 0 var(--line)}
+button.go:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--line)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h2{font-size:1.4rem;margin:36px 0 6px}
+details{margin-top:28px}
+summary{cursor:pointer;font-weight:800;font-size:1.3rem}
+.lists{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:14px}
+.list{background:var(--paper);border:2px solid var(--line);padding:12px}
+.list input{width:100%;font:inherit;color:var(--ink);background:var(--input);border:1px solid var(--line);padding:6px 8px;margin-bottom:6px}
+.list input.name{font-weight:800}
+.list label{display:flex;gap:8px;align-items:center}
+.list label span{width:1.2em;font-weight:800;color:var(--muted)}
+.hist{list-style:none;padding:0;margin:10px 0 0;max-width:100%;overflow-x:auto}
+.hist li{background:var(--paper);border:1px solid var(--line);padding:8px 12px;margin-bottom:6px}
+.hist b{color:var(--muted);font-weight:600;margin-right:8px}
+.note{color:var(--muted);font-size:.9rem;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Collage dice</h1>
+  <p class="sub">Roll one die per category. Each number picks an item from that category’s list. Build your collage from whatever comes up.</p>
+
+  <section class="sheet" aria-live="polite">
+    <div class="dice" id="dice"></div>
+    <div class="result" id="result"></div>
+    <p class="nums" id="nums"></p>
+    <div class="row">
+      <button class="go" id="roll">Roll</button>
+      <button id="copy">Copy result</button>
+    </div>
+  </section>
+
+  <details open="">
+    <summary>Edit the lists</summary>
+    <p class="note">Each category has six slots, one for each side of the die. Changes save in this browser.</p>
+    <div class="lists" id="lists"></div>
+    <div class="row" style="margin-top:12px">
+      <button id="addcat">Add category</button>
+      <button id="rmcat">Remove last category</button>
+      <button id="reset">Reset to defaults</button>
+      <button class="go" id="savecopy" style="font-size:1rem;padding:10px 16px">Save my lists as a new file</button>
+    </div>
+    <p class="note">“Save my lists as a new file” downloads a copy of this page (named index.html) with your current lists built in as the starting lists. Upload that file to replace the old one when you host it.</p>
+  </details>
+
+  <h2>Past rolls</h2>
+  <ul class="hist" id="hist"></ul>
+</main>
+
+<script>
+const DEFAULTS = [
+  {
+    "name": "Color",
+    "items": [
+      "Red",
+      "Blue",
+      "Yellow",
+      "Green",
+      "Black & white",
+      "Orange"
+    ]
+  },
+  {
+    "name": "Texture",
+    "items": [
+      "Smooth",
+      "Rough",
+      "Torn edge",
+      "Glossy",
+      "Patterned",
+      "Handwritten"
+    ]
+  },
+  {
+    "name": "Shape",
+    "items": [
+      "Square",
+      "Circle",
+      "Triangle",
+      "Strip",
+      "Organic blob",
+      "Star"
+    ]
+  },
+  {
+    "name": "Beings",
+    "items": [
+      "Bird",
+      "Human",
+      "Insect",
+      "Fish",
+      "Reptile",
+      "Mammal"
+    ]
+  },
+  {
+    "name": "Places",
+    "items": [
+      "Desert",
+      "City",
+      "Ocean",
+      "Field",
+      "Forest",
+      "Mountain"
+    ]
+  },
+  {
+    "name": "Things",
+    "items": [
+      "Electronics",
+      "Accessories",
+      "Vehicle",
+      "Building",
+      "Food",
+      "Books"
+    ]
+  }
+];
+const KEY = "collage-dice-v1";
+let cats = JSON.parse(JSON.stringify(DEFAULTS));
+let last = null, history = [], busy = false;
+
+const SIG = JSON.stringify(DEFAULTS);
+try { const s = localStorage.getItem(KEY); if (s) { const p = JSON.parse(s); const list = Array.isArray(p) ? p : (p && p.sig === SIG ? p.cats : null); if (Array.isArray(list) && list.length) cats = list; } } catch(e){}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify({sig:SIG, cats:cats})); } catch(e){} }
+
+const $ = id => document.getElementById(id);
+const rnd = () => {
+  if (window.crypto && crypto.getRandomValues) { const a = new Uint32Array(1); let v; do { crypto.getRandomValues(a); v = a[0]; } while (v >= 4294967292); return (v % 6) + 1; }
+  return Math.floor(Math.random()*6)+1;
+};
+const label = (c,n) => (c.items[n-1] || "").trim() || "(empty slot " + n + ")";
+
+function renderDice(rolls, spinning){
+  $("dice").className = "dice" + (spinning ? " rolling" : "");
+  $("dice").innerHTML = cats.map((c,i) => {
+    const n = rolls ? rolls[i] : "?";
+    const v = rolls && !spinning ? label(c, n) : (spinning ? "…" : "");
+    return '<div class="slot"><div class="cat"></div><div class="die">'+n+'</div><div class="val"></div></div>';
+  }).join("");
+  [...$("dice").children].forEach((el,i) => {
+    el.querySelector(".cat").textContent = cats[i].name;
+    el.querySelector(".val").textContent = rolls && !spinning ? label(cats[i], rolls[i]) : (spinning ? "…" : "");
+  });
+}
+
+function showResult(rolls){
+  $("result").textContent = rolls.map((n,i)=>label(cats[i],n)).join(" / ");
+  $("nums").textContent = "Numbers: " + rolls.join(" / ");
+}
+
+function roll(){
+  if (busy) return; busy = true;
+  const final = cats.map(rnd);
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const steps = reduce ? 1 : 8; let k = 0;
+  const tick = setInterval(() => {
+    k++;
+    if (k < steps) { renderDice(cats.map(rnd), true); return; }
+    clearInterval(tick);
+    last = final; renderDice(final, false); showResult(final);
+    history.unshift(final.map((n,i)=>label(cats[i],n)).join(" / ") + "||" + final.join("/"));
+    history = history.slice(0,10); renderHist(); busy = false;
+  }, 70);
+}
+
+function renderHist(){
+  $("hist").innerHTML = "";
+  if (!history.length) { $("hist").innerHTML = "<li>No rolls yet.</li>"; return; }
+  history.forEach(h => {
+    const [txt, nums] = h.split("||");
+    const li = document.createElement("li");
+    const b = document.createElement("b"); b.textContent = nums;
+    li.appendChild(b); li.appendChild(document.createTextNode(txt));
+    $("hist").appendChild(li);
+  });
+}
+
+function renderLists(){
+  const box = $("lists"); box.innerHTML = "";
+  cats.forEach((c,ci) => {
+    const d = document.createElement("div"); d.className = "list";
+    const nm = document.createElement("input"); nm.className = "name"; nm.value = c.name; nm.setAttribute("aria-label","Category name");
+    nm.oninput = () => { c.name = nm.value; save(); renderDice(last, false); };
+    d.appendChild(nm);
+    for (let i=0;i<6;i++){
+      const l = document.createElement("label");
+      const s = document.createElement("span"); s.textContent = i+1;
+      const inp = document.createElement("input"); inp.value = c.items[i] || ""; inp.setAttribute("aria-label", c.name+" option "+(i+1));
+      inp.oninput = () => { c.items[i] = inp.value; save(); if (last) { renderDice(last,false); showResult(last); } };
+      l.appendChild(s); l.appendChild(inp); d.appendChild(l);
+    }
+    box.appendChild(d);
+  });
+}
+
+function refresh(){ last = null; renderDice(null,false); renderLists(); $("result").textContent = "Press roll to begin"; $("nums").innerHTML = "&nbsp;"; }
+
+$("roll").onclick = roll;
+$("copy").onclick = async () => {
+  if (!last) return;
+  const t = last.map((n,i)=>label(cats[i],n)).join(" / ");
+  const b = $("copy");
+  try { await navigator.clipboard.writeText(t); b.textContent = "Copied"; } catch(e){ b.textContent = "Copy failed"; }
+  setTimeout(()=> b.textContent = "Copy result", 1200);
+};
+$("addcat").onclick = () => { if (cats.length < 8) { cats.push({name:"New category", items:["","","","","",""]}); save(); refresh(); } };
+$("rmcat").onclick = () => { if (cats.length > 1) { cats.pop(); save(); refresh(); } };
+$("reset").onclick = () => { cats = JSON.parse(JSON.stringify(DEFAULTS)); save(); refresh(); };
+$("savecopy").onclick = async () => {
+  const b = $("savecopy"), orig = "Save my lists as a new file";
+  const say = t => { b.textContent = t; setTimeout(()=> b.textContent = orig, 1800); };
+  try {
+    const clone = document.documentElement.cloneNode(true);
+    ["dice","lists","hist","result","nums"].forEach(id => { const el = clone.querySelector("#"+id); if (el) el.innerHTML = ""; });
+    const dv = clone.querySelector("#dice"); if (dv) dv.className = "dice";
+    clone.removeAttribute("data-theme");
+    clone.querySelectorAll("script").forEach(s => {
+      const t = s.textContent, a = t.indexOf("const DEFAULTS = "), e = t.indexOf("const KEY");
+      if (a > -1 && e > a) {
+        const data = JSON.stringify(cats, null, 2).replace(/</g, "\\u003c");
+        s.textContent = t.slice(0, a) + "const DEFAULTS = " + data + ";\n" + t.slice(e);
+      } else { s.remove(); }
+    });
+    const html = "<!DOCTYPE html>\n" + clone.outerHTML;
+    const dl = (window.claude && claude.use) ? await claude.use("downloads") : null;
+    if (dl) { await dl.save({filename:"index.html", data:html}); }
+    else {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([html], {type:"text/html"}));
+      a.download = "index.html"; document.body.appendChild(a); a.click(); a.remove();
+    }
+    say("Saved");
+  } catch(err) { say(err && err.code === "declined" ? "Cancelled" : "Save failed"); }
+};
+document.addEventListener("keydown", e => { if (e.code === "Space" && document.activeElement === document.body) { e.preventDefault(); roll(); } });
+
+refresh();
+</script>
+
+
+</body></html>
